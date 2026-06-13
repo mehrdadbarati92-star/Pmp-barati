@@ -1,0 +1,600 @@
+!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>آزمون مدیریت بیمار (PMP)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --ink:#0B2A3D;
+  --ink-2:#15455F;
+  --paper:#F2F6F9;
+  --card:#FFFFFF;
+  --line:#D9E3EA;
+  --muted:#5C7184;
+  --pos:#1E9E6F;
+  --pos-bg:#E5F6EE;
+  --neg:#D6483F;
+  --neg-bg:#FCEAE8;
+  --warn:#C9861B;
+  --warn-bg:#FBF1E0;
+  --accent:#1F6FEB10;
+  --radius:16px;
+  --radius-sm:10px;
+  --shadow:0 6px 28px rgba(11,42,61,.10);
+  --font-ui:'Vazirmatn',Tahoma,sans-serif;
+  --font-mono:'JetBrains Mono','Vazirmatn',monospace;
+  --maxw:760px;
+}
+
+/* ============================================================
+   RESET / BASE
+   ============================================================ */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--font-ui);
+  background:var(--paper);
+  color:var(--ink);
+  direction:rtl;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+img{max-width:100%;display:block}
+button{font-family:inherit}
+h1,h2,h3{margin:0}
+p{margin:0}
+.icon{width:1.1em;height:1.1em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.18em;flex-shrink:0}
+.icon-fill{fill:currentColor;stroke:none}
+
+/* ============================================================
+   LAYOUT SHELLS
+   ============================================================ */
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+.shell{width:100%;max-width:var(--maxw);margin:0 auto;padding:20px 18px 40px}
+
+/* top brand bar (shared) */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--ink);color:#fff;
+  padding:12px 18px;gap:12px;
+}
+.topbar .brand{display:flex;align-items:center;gap:10px;min-width:0}
+.topbar .brand-text{min-width:0}
+.topbar .org-name{font-weight:700;font-size:.95rem;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .org-sub{font-size:.72rem;color:#cfe0ec;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.logo-mark{width:34px;height:34px;border-radius:9px;background:#fff;color:var(--ink);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.logo-mark img{width:100%;height:100%;object-fit:contain}
+.logo-mark .icon{width:20px;height:20px;stroke:var(--ink)}
+
+/* ECG divider */
+.ecg-wrap{width:100%;background:var(--ink);line-height:0}
+.ecg-wrap svg{display:block;width:100%;height:34px}
+.ecg-line{fill:none;stroke:#5FE3B3;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:1400;stroke-dashoffset:1400;animation:draw 1.6s ease-out forwards}
+@media (prefers-reduced-motion:reduce){.ecg-line{animation:none;stroke-dashoffset:0}}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+/* ============================================================
+   TYPOGRAPHY HELPERS
+   ============================================================ */
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:.74rem;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+
+/* ============================================================
+   CARDS / BUTTONS / FIELDS
+   ============================================================ */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field label{font-size:.84rem;font-weight:600;color:var(--ink-2)}
+.field input,.field select{
+  font-family:var(--font-ui);font-size:1rem;padding:11px 13px;border:1.5px solid var(--line);
+  border-radius:var(--radius-sm);background:#fbfdfe;color:var(--ink);outline:none;transition:.15s border-color,.15s background;
+}
+.field input:focus,.field select:focus{border-color:var(--ink-2);background:#fff}
+
+.btn{
+  font-family:inherit;font-size:.95rem;font-weight:700;border-radius:var(--radius-sm);
+  padding:13px 22px;border:1.5px solid transparent;cursor:pointer;display:inline-flex;
+  align-items:center;justify-content:center;gap:8px;transition:.15s transform,.15s background,.15s opacity;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--ink);color:#fff}
+.btn-primary:hover{background:var(--ink-2)}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed}
+.btn-ghost{background:#fff;color:var(--ink);border-color:var(--line)}
+.btn-ghost:hover{border-color:var(--ink-2)}
+.btn-ghost:disabled{opacity:.4;cursor:not-allowed}
+.btn-block{width:100%}
+.btn:focus-visible{outline:2px solid var(--ink-2);outline-offset:2px}
+
+/* ============================================================
+   LOGIN SCREEN
+   ============================================================ */
+.login-shell{padding-top:36px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.brand-block{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:18px}
+.brand-block .logo-mark{width:64px;height:64px;border-radius:18px;background:var(--ink)}
+.brand-block .logo-mark .icon{width:36px;height:36px;stroke:#5FE3B3}
+.brand-block .org-name{font-size:1.05rem;font-weight:800;color:var(--ink)}
+.brand-block .org-sub{font-size:.85rem;color:var(--muted)}
+
+.ecg-wrap.standalone{width:100%;max-width:380px;border-radius:999px;overflow:hidden;margin:6px auto 22px}
+
+.exam-title{font-size:1.5rem;font-weight:800;margin-bottom:4px}
+.exam-case{color:var(--muted);font-size:.95rem;margin-bottom:22px}
+
+.login-card{width:100%;text-align:right}
+.exam-meta{display:flex;gap:10px;margin:4px 0 16px;flex-wrap:wrap}
+.meta-chip{
+  display:flex;align-items:center;gap:6px;background:var(--paper);border:1px solid var(--line);
+  border-radius:999px;padding:7px 14px;font-size:.82rem;font-weight:600;color:var(--ink-2)
+}
+.meta-chip .icon{width:1em;height:1em;stroke:var(--ink-2)}
+.rules-list{margin:0 0 18px;padding-inline-start:20px;display:flex;flex-direction:column;gap:6px;font-size:.86rem;color:var(--ink-2);text-align:right}
+.rules-list li{line-height:1.6}
+.error-msg{color:var(--neg);font-size:.85rem;margin-top:10px;min-height:1.2em;font-weight:600}
+
+/* ============================================================
+   EXAM SCREEN
+   ============================================================ */
+.timer{
+  font-family:var(--font-mono);font-size:1.15rem;font-weight:700;letter-spacing:.05em;
+  background:#0E3B53;border:1px solid #1c5a7c;border-radius:999px;padding:7px 16px;
+  display:flex;align-items:center;gap:8px;color:#fff;flex-shrink:0
+}
+.timer .icon{stroke:#9FD8EA}
+.timer.warn{background:#5A1F1F;border-color:#7a2c2c;color:#ffd9d6;animation:pulse 1.2s ease-in-out infinite}
+.timer.warn .icon{stroke:#ffb4ae}
+@media (prefers-reduced-motion:reduce){.timer.warn{animation:none}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+.progress-row{display:flex;align-items:center;justify-content:space-between;margin:18px 0 14px}
+.stage-label{font-weight:800;font-size:1rem}
+.stage-dots{display:flex;gap:7px}
+.stage-dot{width:11px;height:11px;border-radius:50%;background:var(--line);border:1.5px solid var(--line);transition:.15s}
+.stage-dot.done{background:var(--pos);border-color:var(--pos)}
+.stage-dot.current{background:var(--ink);border-color:var(--ink);transform:scale(1.2)}
+
+.case-card{margin-bottom:16px}
+.case-card .case-head{
+  display:flex;align-items:center;justify-content:space-between;cursor:pointer;gap:10px;
+}
+.case-card .case-head h2{font-size:.92rem;font-weight:800;display:flex;align-items:center;gap:8px}
+.case-card .case-head .icon{stroke:var(--ink-2)}
+.case-card .toggle-icon{transition:transform .2s}
+.case-card.collapsed .toggle-icon{transform:rotate(180deg)}
+.case-card .scenario-text{
+  font-size:.92rem;line-height:1.85;color:var(--ink-2);margin-top:12px;
+  border-top:1px dashed var(--line);padding-top:12px
+}
+.case-card.collapsed .scenario-text{display:none}
+
+.stem-card{margin-bottom:16px;border-color:#bcd4e4;background:linear-gradient(180deg,#EAF3F9,#fff)}
+.stem-card .eyebrow{margin-bottom:8px}
+.stem-card .stem-text{font-size:.97rem;line-height:1.9;font-weight:600;color:var(--ink)}
+.stem-card .stem-text .vital{font-family:var(--font-mono);font-weight:700;color:var(--ink-2)}
+
+.options-card{padding:8px}
+.option-row{
+  display:flex;align-items:flex-start;gap:12px;padding:13px 10px;border-radius:var(--radius-sm);
+  cursor:pointer;transition:.12s background;border-bottom:1px solid var(--line)
+}
+.option-row:last-child{border-bottom:none}
+.option-row:hover{background:var(--paper)}
+.option-row input[type=checkbox]{position:absolute;opacity:0;width:0;height:0}
+.checkbox-box{
+  width:24px;height:24px;border-radius:7px;border:2px solid #b9c8d3;background:#fff;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;margin-top:1px;transition:.12s
+}
+.checkbox-box .icon{width:15px;height:15px;stroke:#fff;opacity:0;transition:.1s}
+.option-row input:checked + .checkbox-box{background:var(--ink);border-color:var(--ink)}
+.option-row input:checked + .checkbox-box .icon{opacity:1}
+.option-row input:focus-visible + .checkbox-box{outline:2px solid var(--ink-2);outline-offset:2px}
+.option-text{font-size:.93rem;line-height:1.6;padding-top:1px}
+.option-row.disabled{opacity:.45;cursor:not-allowed}
+
+.select-info{font-size:.82rem;color:var(--muted);font-weight:600;text-align:center;flex:1}
+
+.nav-row{display:flex;align-items:center;gap:10px;margin-top:18px}
+.nav-row .btn{flex-shrink:0}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(11,42,61,.55);display:none;align-items:center;
+  justify-content:center;padding:20px;z-index:50
+}
+.modal-overlay.active{display:flex}
+.modal-box{background:#fff;border-radius:var(--radius);max-width:380px;width:100%;padding:24px;text-align:center;box-shadow:var(--shadow)}
+.modal-box h3{font-size:1.05rem;margin-bottom:10px}
+.modal-box p{font-size:.9rem;color:var(--muted);line-height:1.7;margin-bottom:18px}
+.modal-actions{display:flex;gap:10px}
+.modal-actions .btn{flex:1}
+
+/* ============================================================
+   REPORT SCREEN
+   ============================================================ */
+.report-head{display:flex;flex-direction:column;gap:4px;margin-bottom:18px}
+.report-head .cand-name{font-size:1.25rem;font-weight:800}
+.report-head .cand-meta{font-size:.85rem;color:var(--muted)}
+
+.verdict-row{display:flex;align-items:center;gap:18px;margin-bottom:16px;flex-wrap:wrap}
+.stamp{
+  border:3px solid var(--pos);color:var(--pos);font-weight:900;font-size:1.3rem;
+  padding:10px 22px;border-radius:12px;transform:rotate(-6deg);letter-spacing:.04em;
+  text-transform:uppercase;flex-shrink:0
+}
+.stamp.fail{border-color:var(--neg);color:var(--neg)}
+.score-block{flex:1;min-width:160px}
+.score-block .score-num{font-family:var(--font-mono);font-size:2rem;font-weight:800;line-height:1}
+.score-block .score-num span{font-size:1.1rem;color:var(--muted);font-weight:600}
+.score-block .score-pct{font-size:.85rem;color:var(--muted);margin-top:2px}
+.meter{height:8px;border-radius:999px;background:var(--line);overflow:hidden;margin-top:8px}
+.meter-fill{height:100%;background:var(--pos);border-radius:999px;transition:width .5s ease}
+.meter-fill.fail{background:var(--neg)}
+
+.alert{
+  display:flex;gap:10px;align-items:flex-start;border-radius:var(--radius-sm);padding:13px 14px;
+  font-size:.86rem;line-height:1.7;margin-bottom:16px;border:1px solid
+}
+.alert .icon{margin-top:2px;flex-shrink:0}
+.alert-danger{background:var(--neg-bg);border-color:#f3c6c2;color:#8c2c25}
+.alert-info{background:#EAF3F9;border-color:#bcd4e4;color:var(--ink-2)}
+
+.stage-report{margin-bottom:12px;overflow:hidden}
+.stage-report-head{
+  display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:16px 18px;gap:10px
+}
+.stage-report-head h3{font-size:.95rem;font-weight:800;display:flex;align-items:center;gap:8px}
+.stage-report-head .sub{font-size:.78rem;color:var(--muted);font-weight:600;margin-top:2px}
+.stage-report-head .pts{font-family:var(--font-mono);font-weight:800;font-size:1rem;flex-shrink:0;white-space:nowrap}
+.stage-report-head .toggle-icon{transition:transform .2s}
+.stage-report.collapsed .toggle-icon{transform:rotate(180deg)}
+.stage-report-body{border-top:1px solid var(--line)}
+.stage-report.collapsed .stage-report-body{display:none}
+.stage-report .stem-recap{font-size:.84rem;color:var(--ink-2);line-height:1.8;padding:14px 18px;background:var(--paper);border-bottom:1px solid var(--line)}
+
+.opt-report{display:flex;gap:12px;align-items:flex-start;padding:13px 18px;border-bottom:1px solid var(--line)}
+.opt-report:last-child{border-bottom:none}
+.opt-report .mark{
+  width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px
+}
+.opt-report .mark.checked{background:var(--ink);color:#fff}
+.opt-report .mark.unchecked{background:#fff;border:2px solid #cfd9e1;color:transparent}
+.opt-report .mark .icon{width:14px;height:14px;stroke:currentColor}
+.opt-report .body{flex:1}
+.opt-report .opt-text{font-size:.9rem;font-weight:600;margin-bottom:3px}
+.opt-report .feedback{font-size:.83rem;color:var(--muted);line-height:1.7}
+.opt-report .feedback .death-flag{color:var(--neg);font-weight:700}
+.opt-report .pts{
+  font-family:var(--font-mono);font-weight:800;font-size:.92rem;border-radius:8px;padding:3px 9px;
+  flex-shrink:0;height:fit-content
+}
+.opt-report .pts.pos{color:var(--pos);background:var(--pos-bg)}
+.opt-report .pts.neg{color:var(--neg);background:var(--neg-bg)}
+.opt-report .pts.zero{color:var(--muted);background:var(--paper)}
+
+.report-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.report-actions .btn{flex:1;min-width:140px}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:480px){
+  .shell{padding:14px 12px 32px}
+  .exam-title{font-size:1.25rem}
+  .stamp{font-size:1.05rem;padding:8px 16px}
+  .score-block .score-num{font-size:1.6rem}
+  .topbar .org-sub{display:none}
+  .nav-row{flex-wrap:wrap}
+  .select-info{order:3;width:100%}
+}
+
+/* ============================================================
+   PRINT
+   ============================================================ */
+@media print{
+  .topbar,.report-actions,.ecg-wrap{display:none!important}
+  .screen{display:block!important}
+  #screen-login,#screen-exam{display:none!important}
+  .card{box-shadow:none;border:1px solid #ccc}
+  .stage-report.collapsed .stage-report-body{display:block!important}
+  .toggle-icon{display:none}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= ICON SPRITE ================= -->
+<svg style="display:none">
+  <symbol id="ic-heart" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></symbol>
+  <symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></symbol>
+  <symbol id="ic-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+  <symbol id="ic-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-9"/></symbol>
+  <symbol id="ic-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="ic-alert" viewBox="0 0 24 24"><path d="M12 3 2 21h20L12 3z"/><path d="M12 10v4M12 17h.01"/></symbol>
+  <symbol id="ic-download" viewBox="0 0 24 24"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 19h16"/></symbol>
+  <symbol id="ic-print" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4v-6h16v6h-2M6 14h12v7H6z"/></symbol>
+  <symbol id="ic-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></symbol>
+  <symbol id="ic-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2 5 4-14 2 9h6"/></symbol>
+</svg>
+
+<div id="app">
+
+  <!-- ================= LOGIN SCREEN ================= -->
+  <section id="screen-login" class="screen active">
+    <div class="shell login-shell">
+      <div class="brand-block">
+        <div class="logo-mark" id="logo-mark-login"><svg class="icon"><use href="#ic-heart"/></svg></div>
+        <div class="org-name" id="org-name-login"></div>
+        <div class="org-sub" id="org-sub-login"></div>
+      </div>
+
+      <div class="ecg-wrap standalone"><svg viewBox="0 0 600 60" preserveAspectRatio="none"><path class="ecg-line" d="M0,32 L40,32 L52,32 L60,14 L70,50 L80,8 L90,32 L150,32 L162,32 L170,14 L180,50 L190,8 L200,32 L260,32 L272,32 L280,14 L290,50 L300,8 L310,32 L370,32 L382,32 L390,14 L400,50 L410,8 L420,32 L480,32 L492,32 L500,14 L510,50 L520,8 L530,32 L600,32"/></svg></div>
+
+      <h1 class="exam-title" id="exam-title-text"></h1>
+      <p class="exam-case" id="exam-case-text"></p>
+
+      <div class="card login-card">
+        <div class="field">
+          <label for="cand-name">نام و نام خانوادگی</label>
+          <input id="cand-name" type="text" autocomplete="name" placeholder="مثلاً: علی رضایی">
+        </div>
+        <div class="field">
+          <label for="cand-id">کد ملی / شماره دانشجویی</label>
+          <input id="cand-id" type="text" inputmode="numeric" placeholder="مثلاً: ۹۸۱۲۳۴۵۶۷۸">
+        </div>
+        <div class="field">
+          <label for="cand-dept">بخش / رشته (اختیاری)</label>
+          <input id="cand-dept" type="text" placeholder="مثلاً: داخلی، اورژانس">
+        </div>
+
+        <div class="exam-meta">
+          <div class="meta-chip"><svg class="icon"><use href="#ic-clock"/></svg> <span id="meta-duration"></span> دقیقه</div>
+          <div class="meta-chip"><svg class="icon"><use href="#ic-list"/></svg> <span id="meta-stages"></span> مرحله</div>
+          <div class="meta-chip"><svg class="icon"><use href="#ic-pulse"/></svg> نمره‌دهی وزن‌دار</div>
+        </div>
+
+        <ul class="rules-list">
+          <li>پس از شروع آزمون، تایمر شمارش معکوس فعال می‌شود و در صورت اتمام زمان، آزمون به‌صورت خودکار ثبت می‌گردد.</li>
+          <li>در هر مرحله می‌توانید هر تعداد گزینه که لازم می‌دانید انتخاب کنید، مگر اینکه محدودیتی ذکر شده باشد.</li>
+          <li>بازخورد و نمرات هر گزینه تنها پس از پایان آزمون در گزارش نمایش داده می‌شود.</li>
+          <li>امکان بازگشت به مراحل قبلی پیش از ثبت نهایی وجود دارد.</li>
+        </ul>
+
+        <button id="btn-start" class="btn btn-primary btn-block">
+          <svg class="icon"><use href="#ic-pulse"/></svg> شروع آزمون
+        </button>
+        <p class="error-msg" id="login-error"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= EXAM SCREEN ================= -->
+  <section id="screen-exam" class="screen">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo-mark" id="logo-mark-exam"><svg class="icon"><use href="#ic-heart"/></svg></div>
+        <div class="brand-text">
+          <div class="org-name" id="org-name-exam"></div>
+          <div class="org-sub" id="org-sub-exam"></div>
+        </div>
+      </div>
+      <div class="timer mono" id="timer"><svg class="icon"><use href="#ic-clock"/></svg><span id="timer-text">۰۰:۰۰</span></div>
+    </div>
+    <div class="ecg-wrap"><svg viewBox="0 0 600 34" preserveAspectRatio="none"><path class="ecg-line" d="M0,18 L40,18 L52,18 L60,6 L70,28 L80,2 L90,18 L150,18 L162,18 L170,6 L180,28 L190,2 L200,18 L260,18 L272,18 L280,6 L290,28 L300,2 L310,18 L370,18 L382,18 L390,6 L400,28 L410,2 L420,18 L480,18 L492,18 L500,6 L510,28 L520,2 L530,18 L600,18"/></svg></div>
+
+    <div class="shell">
+      <div class="progress-row">
+        <div class="stage-label" id="stage-label"></div>
+        <div class="stage-dots" id="stage-dots"></div>
+      </div>
+
+      <div class="card case-card" id="case-card">
+        <div class="case-head" id="case-head">
+          <h2><svg class="icon"><use href="#ic-list"/></svg> <span id="case-name-text"></span></h2>
+          <svg class="icon toggle-icon"><use href="#ic-chevron"/></svg>
+        </div>
+        <div class="scenario-text" id="scenario-text"></div>
+      </div>
+
+      <div class="card stem-card">
+        <div class="eyebrow" id="stem-eyebrow"></div>
+        <div class="stem-text" id="stem-text"></div>
+      </div>
+
+      <div class="card options-card" id="options-card"></div>
+
+      <div class="nav-row">
+        <button id="btn-prev" class="btn btn-ghost">قبلی</button>
+        <div class="select-info" id="select-info"></div>
+        <button id="btn-next" class="btn btn-primary">بعدی</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= REPORT SCREEN ================= -->
+  <section id="screen-report" class="screen">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo-mark" id="logo-mark-report"><svg class="icon"><use href="#ic-heart"/></svg></div>
+        <div class="brand-text">
+          <div class="org-name" id="org-name-report"></div>
+          <div class="org-sub" id="org-sub-report"></div>
+        </div>
+      </div>
+    </div>
+    <div class="ecg-wrap"><svg viewBox="0 0 600 34" preserveAspectRatio="none"><path class="ecg-line" d="M0,18 L40,18 L52,18 L60,6 L70,28 L80,2 L90,18 L150,18 L162,18 L170,6 L180,28 L190,2 L200,18 L260,18 L272,18 L280,6 L290,28 L300,2 L310,18 L370,18 L382,18 L390,6 L400,28 L410,2 L420,18 L480,18 L492,18 L500,6 L510,28 L520,2 L530,18 L600,18"/></svg></div>
+
+    <div class="shell" id="report-shell"></div>
+  </section>
+
+</div>
+
+<!-- ================= MODAL ================= -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box">
+    <h3 id="modal-title"></h3>
+    <p id="modal-text"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="modal-cancel"></button>
+      <button class="btn btn-primary" id="modal-confirm"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG  —  برای شخصی‌سازی برندینگ، زمان و نمره قبولی این بخش را ویرایش کنید
+   ============================================================ */
+const CONFIG = {
+  orgName: "دانشگاه علوم پزشکی / بیمارستان آموزشی",
+  orgSubtitle: "مرکز مهارت‌های بالینی — آزمون PMP",
+  logoUrl: "",                 // در صورت تمایل، آدرس تصویر لوگو را اینجا قرار دهید (مثلاً "logo.png")
+  examDurationMinutes: 25,     // مدت زمان آزمون به دقیقه (۲۰ تا ۳۰ دقیقه)
+  passPercentage: 60,          // درصد لازم برای قبولی از حداکثر نمره ممکن
+  criticalErrorAutoFail: true  // اگر true باشد، انتخاب گزینه‌ی منجر به فوت (*) به‌صورت خودکار به معنی ردشدن است
+};
+
+/* ============================================================
+   DATA  —  پرونده بیمار و سوالات. برای افزودن آزمون جدید،
+   ساختار همین آبجکت را تکرار کنید.
+   هر گزینه شامل: text (اقدام)، feedback (بازخورد)،
+   select (نمره در صورت انتخاب)، notSelect (نمره در صورت عدم انتخاب)،
+   death (true یعنی این اقدام می‌تواند به فوت بیمار منجر شود)
+   ============================================================ */
+const DATA = {
+  examTitle: "آزمون مدیریت بیمار (PMP)",
+  caseName: "ایستگاه: قفسه سینه (درد قفسه سینه)",
+  scenario: "مردی ۵۸ ساله با سابقه فشار خون بالا، دیابت نوع ۲ و مصرف سیگار (۲۰ پاکت-سال) با شکایت درد شدید و فشاری قفسه سینه از یک ساعت قبل به اورژانس مراجعه کرده است. درد از ناحیه زیر جناغ سینه شروع شده و به فک و بازوی چپ تیر می‌کشد و با تعریق سرد، تهوع و سرگیجه همراه است. درد در حالت استراحت ایجاد شده و علی‌رغم تجویز نیتروگلیسیرین زیرزبانی توسط پایگاه اورژانس پیش از مراجعه، تسکین نیافته است.",
+  stages: [
+    {
+      title: "مرحله ۱ — اقدامات تشخیصی در اورژانس",
+      stem: "در بدو ورود به اورژانس، علائم حیاتی بیمار به این شرح است: BP: 88/58 mmHg، PR: 52/min (منظم و ضعیف)، RR: 22/min، O2 sat: 92% (room air)، بدون تب. در معاینه، اتساع ورید ژوگولار (JVD) مشخص است؛ سمع ریه‌ها واضح و بدون رال است؛ سمع قلب طبیعی، بدون سوفل یا مالش شنیده می‌شود. در ستینگ اورژانس کدام اقدامات تشخیصی را انجام می‌دهید؟",
+      maxSelect: null,
+      options: [
+        {text:"ECG ۱۲ لیدی استاندارد", feedback:"ST elevation در لیدهای II، III و aVF (با میزان بیشتر در III نسبت به II) همراه با ST depression متقابل در I و aVL", select:1, notSelect:-2, death:false},
+        {text:"ECG با لیدهای راست قلب (V3R تا V6R)", feedback:"ST elevation ≥1mm در V4R، مطرح‌کننده درگیری بطن راست", select:1, notSelect:-1, death:false},
+        {text:"تروپونین قلبی (hs-Troponin)", feedback:"مثبت و رو به افزایش", select:1, notSelect:0, death:false},
+        {text:"رادیوگرافی قفسه سینه (CXR)", feedback:"ریه‌ها واضح، بدون احتقان وریدی ریوی؛ سایه قلب طبیعی", select:1, notSelect:0, death:false},
+        {text:"آزمایش‌های پایه (CBC، الکترولیت‌ها، BUN، Cr، قند خون)", feedback:"Na: 138, K: 4.2, BUN: 16, Cr: 0.9, Glucose: 145 mg/dl, Hb طبیعی", select:1, notSelect:0, death:false},
+        {text:"D-dimer", feedback:"کمکی به تشخیص نکرد و در این بیمار اندیکاسیون نداشت", select:-1, notSelect:0, death:false},
+        {text:"اکوکاردیوگرافی در بالین بیمار (point-of-care echo)", feedback:"هیپوکینزی و بزرگی بطن راست؛ عملکرد سیستولیک بطن چپ طبیعی", select:1, notSelect:0, death:false},
+        {text:"CT آنژیوگرافی شریان‌های ریوی (رد آمبولی ریه)", feedback:"اندیکاسیون نداشت و باعث تأخیر در ری‌پرفیوژن شد", select:-1, notSelect:0, death:false}
+      ]
+    },
+    {
+      title: "مرحله ۲ — اقدامات درمانی اولیه",
+      stem: "با توجه به یافته‌های فوق، تشخیص انفارکتوس میوکارد با ST elevation در ناحیه تحتانی (Inferior STEMI) همراه با درگیری بطن راست (RV infarction) مطرح است. کدام اقدام یا اقدامات درمانی را در این مرحله انجام می‌دهید؟",
+      maxSelect: null,
+      options: [
+        {text:"آسپرین خوراکی (جویدنی) ۳۲۵ میلی‌گرم", feedback:"تجویز و بلع شد", select:1, notSelect:-2, death:false},
+        {text:"تیکاگرلور یا کلوپیدوگرل (دوز بارگیری)", feedback:"تجویز شد", select:1, notSelect:-1, death:false},
+        {text:"هپارین وریدی (UFH)", feedback:"تجویز شد", select:1, notSelect:0, death:false},
+        {text:"نیتروگلیسیرین وریدی", feedback:"فشار خون به ۶۰/۴۰ سقوط کرد و بیمار دچار کاهش سطح هوشیاری شد", select:-3, notSelect:0, death:true},
+        {text:"مورفین سولفات وریدی جهت کنترل درد", feedback:"فشار خون بیشتر کاهش یافت", select:-2, notSelect:0, death:false},
+        {text:"متوپرولول وریدی", feedback:"برادی‌کاردی و افت فشار خون تشدید شد", select:-2, notSelect:0, death:false},
+        {text:"سرم نرمال سالین وریدی (بولوس ۵۰۰ تا ۱۰۰۰ سی‌سی)", feedback:"فشار خون به ۱۰۵/۷۰ و ضربان قلب به ۶۸ بهبود یافت", select:1, notSelect:-1, death:false},
+        {text:"آتورواستاتین ۸۰ میلی‌گرم", feedback:"تجویز شد", select:1, notSelect:0, death:false},
+        {text:"اکسیژن تکمیلی", feedback:"اشباع اکسیژن به ۹۶٪ رسید", select:0, notSelect:0, death:false},
+        {text:"آنژیوپلاستی کرونری اولیه فوری (Primary PCI)", feedback:"انسداد کامل پروگزیمال RCA با استنت‌گذاری باز شد؛ جریان TIMI 3 برقرار شد", select:1, notSelect:-3, death:false}
+      ]
+    },
+    {
+      title: "مرحله ۳ — عارضه روز بعد",
+      stem: "شش ساعت پس از PCI موفق، بیمار از نظر همودینامیک پایدار بود (BP: 105/70 mmHg، PR: 70/min). به‌طور ناگهانی دچار سرگیجه و کاهش خفیف سطح هوشیاری شد. در پایش قلبی، بلوک کامل قلبی (Complete AV Block) با ریتم فرار جانکشنال با ضربان ۳۵ در دقیقه و فشار خون ۷۲/۴۵ مشاهده می‌شود. کدام اقدام یا اقدامات را در این مرحله انجام می‌دهید؟",
+      maxSelect: null,
+      options: [
+        {text:"پیسینگ موقت ترانس‌ونوس (Temporary transvenous pacing)", feedback:"ضربان قلب به ۷۰ و فشار خون به ۱۰۰/۶۵ افزایش یافت", select:1, notSelect:-3, death:false},
+        {text:"آتروپین وریدی (۰.۵ میلی‌گرم)", feedback:"پاسخ ناکافی؛ بلوک قلبی برطرف نشد", select:0, notSelect:0, death:false},
+        {text:"ایزوپرنالین وریدی (تا زمان آماده‌شدن پیسینگ)", feedback:"افزایش موقت ضربان قلب", select:1, notSelect:0, death:false},
+        {text:"بولوس سرم نرمال سالین وریدی", feedback:"فشار خون اندکی بهبود یافت", select:1, notSelect:0, death:false},
+        {text:"تجویز متوپرولول وریدی جهت کنترل ضربان", feedback:"بلوک قلبی و افت فشار خون تشدید شد و بیمار سنکوپ کرد", select:-3, notSelect:0, death:true},
+        {text:"اکوکاردیوگرافی فوری (رد عوارض مکانیکی: VSD، نارسایی حاد میترال، تامپوناد)", feedback:"عملکرد بطن چپ حفظ شده؛ بدون VSD یا پارگی عضله پاپیلار؛ افیوژن خفیف پریکارد بدون تامپوناد", select:1, notSelect:0, death:false},
+        {text:"مشاوره فوری با سرویس قلب جهت پیس‌میکر دائم", feedback:"درخواست مشاوره ثبت شد", select:1, notSelect:0, death:false},
+        {text:"مشاهده بدون اقدام دارویی یا مکانیکی", feedback:"بلوک قلبی و افت فشار خون ادامه یافت و بیمار به سمت شوک پیش رفت", select:-2, notSelect:0, death:false}
+      ]
+    }
+  ]
+};
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+  candidate:{name:"", idNum:"", dept:""},
+  answers: DATA.stages.map(s=>s.options.map(()=>false)),
+  currentStage:0,
+  timeLeft: CONFIG.examDurationMinutes*60,
+  timerId:null,
+  startedAt:null,
+  finishedAt:null,
+  finished:false
+};
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+function $(sel){return document.querySelector(sel)}
+function $all(sel){return Array.from(document.querySelectorAll(sel))}
+function toFa(num){
+  const map={'0':'۰','1':'۱','2':'۲','3':'۳','4':'۴','5':'۵','6':'۶','7':'۷','8':'۸','9':'۹'};
+  return String(num).replace(/[0-9]/g,d=>map[d]);
+}
+function esc(str){
+  const d=document.createElement('div'); d.textContent=String(str); return d.innerHTML;
+}
+function fmtTime(totalSec){
+  const m=Math.floor(totalSec/60), s=totalSec%60;
+  return toFa(String(m).padStart(2,'0'))+':'+toFa(String(s).padStart(2,'0'));
+}
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function openModal(title,text,confirmLabel,cancelLabel,onConfirm){
+  $('#modal-title').textContent=title;
+  $('#modal-text').textContent=text;
+  $('#modal-confirm').textContent=confirmLabel;
+  $('#modal-cancel').textContent=cancelLabel;
+  $('#modal-cancel').style.display = cancelLabel ? '' : 'none';
+  $('#modal-overlay').classList.add('active');
+  $('#modal-confirm').onclick=()=>{ $('#modal-overlay').classList.remove('active'); onConfirm && onConfirm(); };
+  $('#modal-cancel').onclick=()=>{ $('#modal-overlay').classList.remove('active'); };
+}
+
+/* ============================================================
+   BRANDING — اعمال تنظیمات برند در همه صفحات
+   ============================================================ */
+function applyBranding(){
+  ['login','exam','report'].forEach(scope=>{
+    const nameEl=$('#org-name-'+scope), subEl=$('#org-sub-'+scope), logoEl=$('#logo-mark-'+scope);
+    if(nameEl) nameEl.textContent=CONFIG.orgName;
+    if(subEl) subEl.textContent=CONFIG.orgSubtitle;
+    if(logoEl && CONFIG.logoUrl){ logoEl.innerHTML='<img src="'+CONFIG.logoUrl+'" alt="logo">'; }
+  });
+  $('#exam-title-text').textContent=DATA.examTitle;
+  $('#exam-case-text').textContent=DATA.caseName;
+  $('#meta-duration').textContent=toFa(CONFIG.examDurationMinutes);
+  $('#meta-stages').textContent=toFa(DATA.stages.length);
+}
+
+/* PMP_PLACEHOLDER_NEXT */
+</script>
+</body>
+</html>

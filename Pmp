@@ -1,0 +1,53 @@
+/* ============================================================
+   EXAM RENDERING
+   ============================================================ */
+function renderStageDots(){
+  const wrap=$('#stage-dots'); wrap.innerHTML='';
+  DATA.stages.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='stage-dot'+(i===state.currentStage?' current':(i<state.currentStage?' done':''));
+    wrap.appendChild(d);
+  });
+}
+
+function renderStage(){
+  const stage=DATA.stages[state.currentStage];
+  $('#stage-label').textContent=stage.title;
+  renderStageDots();
+
+  // case card (scenario) - render once content, only show on relevant... actually always show, collapsible
+  $('#case-name-text').textContent=DATA.caseName.replace(/^ایستگاه:\s*/,'پرونده بیمار — ');
+  $('#scenario-text').textContent=DATA.scenario;
+
+  $('#stem-eyebrow').textContent=stage.title;
+  $('#stem-text').textContent=stage.stem;
+
+  // options
+  const optWrap=$('#options-card'); optWrap.innerHTML='';
+  stage.options.forEach((opt,idx)=>{
+    const row=document.createElement('label');
+    row.className='option-row';
+    row.innerHTML=`
+      <input type="checkbox" data-idx="${idx}" ${state.answers[state.currentStage][idx]?'checked':''}>
+      <span class="checkbox-box"><svg class="icon"><use href="#ic-check"/></svg></span>
+      <span class="option-text">${esc(opt.text)}</span>
+    `;
+    const cb=row.querySelector('input');
+    cb.addEventListener('change',()=>{
+      state.answers[state.currentStage][idx]=cb.checked;
+      enforceMaxSelect();
+      updateSelectInfo();
+    });
+    optWrap.appendChild(row);
+  });
+
+  enforceMaxSelect();
+  updateSelectInfo();
+  updateNavButtons();
+}
+
+function enforceMaxSelect(){
+  const stage=DATA.stages[state.currentStage];
+  const rows=$all('#options-card .option-row');
+  if(stage.maxSelect==null){
+…
